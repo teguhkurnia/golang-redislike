@@ -1,53 +1,51 @@
-# Daftar Tugas Proyek In-Memory Storage
+# Project Todo List
 
-## Fitur Inti
+## Core Features
 
-- [x] Implementasi struktur data dasar:
+- [x] Implement basic data structures:
   - [x] String
   - [x] List
   - [x] Hash
-  - [ ] Set
-  - [ ] Sorted Set
-- [x] Implementasi perintah (command) untuk setiap struktur data:
-  - [x] Perintah String (SET, GET, DEL)
-  - [x] Perintah String (INCR, DECR)
-  - [x] Perintah List (LPUSH, RPUSH, LPOP, RPOP)
-  - [x] Perintah List (LLEN)
-  - [x] Perintah Hash (HSET, HGET, HDEL, HGETALL)
-  - [x] Perintah Set (SADD, SREM, SMEMBERS, SISMEMBER)
-  - [x] Perintah Sorted Set (ZADD, ZRANGE, ZREM)
-- [x] Penanganan koneksi klien secara konkuren.
-- [x] Parser untuk protokol komunikasi (misalnya, RESP - REdis Serialization Protocol).
+  - [x] Set
+  - [x] Sorted Set
+- [x] Implement commands for each data structure:
+  - [x] String Commands (SET, GET, DEL, INCR, DECR)
+  - [x] List Commands (LPUSH, RPUSH, LPOP, RPOP, LLEN, LRANGE)
+  - [x] Hash Commands (HSET, HGET, HDEL, HGETALL)
+  - [x] Set Commands (SADD, SREM, SMEMBERS, SISMEMBER)
+  - [x] Sorted Set Commands (ZADD, ZRANGE, ZREM)
+- [x] Handle concurrent client connections.
+- [x] Parser for the communication protocol (RESP - Redis Serialization Protocol).
 
-## Persistensi Data
+## Data Persistence
 
-- [ ] Snapshotting (seperti RDB di Redis) untuk menyimpan state ke disk.
-- [ ] Append-Only File (AOF) untuk mencatat setiap operasi tulis.
+- [x] Append-Only File (AOF) to log every write operation.
+- [ ] Snapshotting (like Redis RDB) to save state to disk.
 
-## Manajemen Memori
+## Memory Management
 
-- [ ] Kebijakan penggusuran (Eviction Policy) saat memori penuh:
+- [ ] Eviction Policies when memory is full:
   - [ ] LRU (Least Recently Used)
   - [ ] LFU (Least Frequently Used)
-- [x] Dukungan TTL (Time To Live) untuk kunci (key) agar bisa kedaluwarsa.
+- [x] TTL (Time To Live) support for keys.
 
-## Replikasi
+## Replication
 
-- [ ] Implementasi replikasi master-slave.
+- [ ] Implement master-slave replication.
 
-## Pengujian
+## Testing
 
-- [ ] Unit test untuk semua perintah dan struktur data.
-- [ ] Integration test untuk simulasi interaksi klien dan server.
-- [ ] Benchmark test untuk mengukur performa.
+- [ ] Unit tests for all commands and data structures.
+- [ ] Integration tests to simulate client-server interaction.
+- [ ] Benchmark tests to measure performance.
 
-## Dokumentasi
+## Documentation
 
-- [ ] Dokumentasi API untuk setiap perintah.
-- [ ] Memperbarui `README.md` dengan instruksi cara menjalankan dan menggunakan proyek.
-- [ ] Contoh penggunaan.
+- [x] Update `README.md` with instructions on how to run and use the project.
+- [x] Provide usage examples.
+- [ ] API documentation for each command.
 
-## Tambahan
+## Additional Features
 
-- [ ] Implementasi Pub/Sub (Publish/Subscribe).
-- [ ] Transaksi (MULTI/EXEC).
+- [ ] Implement Pub/Sub (Publish/Subscribe).
+- [ ] Transactions (MULTI/EXEC).

@@ -7,6 +7,7 @@ A high-performance, thread-safe, in-memory key-value store implemented in Go tha
 - **Thread-Safe**: All operations are safe for concurrent use with `sync.RWMutex`.
 - **TCP Server**: Full Redis-compatible network protocol implementation (RESP).
 - **Data Structures**: Support for Strings, Lists, Hashes, Sets, and Sorted Sets.
+- **Data Persistence**: Append-Only File (AOF) to log all write operations for durability.
 - **TTL Management**: Automatic key expiration with background cleanup.
 - **Concurrent Connections**: Handles multiple clients concurrently.
 - **Protocol Compatible**: Implements Redis Serialization Protocol (RESP).
@@ -58,8 +59,8 @@ A high-performance, thread-safe, in-memory key-value store implemented in Go tha
 The following features are planned for future releases:
 
 - **Data Persistence**:
+  - [x] Append-Only File (AOF)
   - [ ] Snapshotting (RDB-style)
-  - [ ] Append-Only File (AOF)
 - **Memory Management**:
   - [ ] Eviction Policies (LRU, LFU)
 - **Replication**:

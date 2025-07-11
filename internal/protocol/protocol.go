@@ -2,8 +2,10 @@ package protocol
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
+	"github.com/teguhkurnia/redis-like/internal/log"
 	"github.com/teguhkurnia/redis-like/internal/protocol/commands"
 	"github.com/teguhkurnia/redis-like/internal/store"
 )
@@ -55,10 +57,14 @@ func init() {
 	commandTable["ZRANGE"] = commands.ZRangeSpec
 }
 
-func HandleCommand(cmd *commands.Command, store *store.Store) []byte {
+func HandleCommand(cmd *commands.Command, store *store.Store, log *log.Log, fromLog bool) []byte {
 	spec, found := commandTable[cmd.Name]
 	if !found {
 		return fmt.Appendf(nil, "-ERR unknown command '%s'\r\n", cmd.Name)
+	}
+
+	if !fromLog && slices.Contains(spec.Flags, "write") {
+		go log.StoreWriteCommandToLog(cmd)
 	}
 
 	return spec.Handler(cmd, store)

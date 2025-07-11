@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 
+	"github.com/teguhkurnia/redis-like/internal/log"
 	"github.com/teguhkurnia/redis-like/internal/protocol"
 	"github.com/teguhkurnia/redis-like/internal/protocol/parser"
 	"github.com/teguhkurnia/redis-like/internal/store"
@@ -19,6 +20,7 @@ type Message struct {
 type Server struct {
 	ListenAddr string
 	Store      *store.Store
+	Log        *log.Log
 	ln         net.Listener
 	clients    map[string]net.Conn
 
@@ -33,10 +35,21 @@ func NewServer(listenAddr string, store *store.Store) *Server {
 		clients:    make(map[string]net.Conn),
 		quitChan:   make(chan struct{}),
 		msgChan:    make(chan *Message, 100),
+		Log:        log.NewLog("server.log"),
 	}
 }
 
 func (s *Server) Start() {
+	// Initialize the store and log
+	cmds, err := s.Log.LoadCommandsFromLog()
+	if err != nil {
+		panic(fmt.Sprintf("Failed to load commands from log: %v", err))
+	}
+
+	for _, cmd := range cmds {
+		protocol.HandleCommand(cmd, s.Store, s.Log, true)
+	}
+
 	ln, err := net.Listen("tcp", s.ListenAddr)
 	if err != nil {
 		panic(err)
@@ -82,7 +95,7 @@ func (s *Server) readLoop(conn net.Conn) {
 			continue
 		}
 
-		response := protocol.HandleCommand(cmd, s.Store)
+		response := protocol.HandleCommand(cmd, s.Store, s.Log, false)
 		if response != nil {
 			_, err := conn.Write(response)
 			if err != nil {

@@ -1,7 +1,6 @@
 package store
 
 import (
-	"fmt"
 	"sync"
 	"time"
 )
@@ -28,15 +27,6 @@ func (s *Store) Set(key, value string) {
 	s.data[key] = Data{
 		Value: value,
 		TTL:   0,
-	}
-}
-
-func (s *Store) SetWithTTL(key string, value interface{}, ttl int64) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.data[key] = Data{
-		Value: value,
-		TTL:   ttl,
 	}
 }
 
@@ -76,6 +66,37 @@ func (s *Store) Exists(key string) bool {
 	defer s.mu.RUnlock()
 	_, exists := s.data[key]
 	return exists
+}
+
+// TIME
+func (s *Store) Expire(key string, seconds int) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.data[key]; !exists {
+		return 0
+	} else {
+		value := s.data[key]
+		value.TTL = time.Now().Unix() + int64(seconds)
+		s.data[key] = value
+	}
+
+	return 1
+}
+
+func (s *Store) TTL(key string) int {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if data, exists := s.data[key]; exists {
+		if data.TTL <= 0 {
+			return -1 // No expiration set
+		}
+		ttl := data.TTL - time.Now().Unix()
+		if ttl < 0 {
+			return -2 // Key has expired
+		}
+		return int(ttl)
+	}
+	return -2 // Key does not exist
 }
 
 // LIST
@@ -120,9 +141,7 @@ func (s *Store) lrangeInternal(key string, start, end int) []string {
 	}
 
 	list := entry.Value.([]string)
-	fmt.Println("List for key:", key, "is:", list)
 	listLen := len(list)
-	fmt.Println("List length for key:", key, "is:", listLen, "start:", start, "end:", end)
 
 	// handle the negative indices
 	if start < 0 {
@@ -131,8 +150,6 @@ func (s *Store) lrangeInternal(key string, start, end int) []string {
 	if end < 0 {
 		end = listLen + end
 	}
-
-	fmt.Println("LRange command received for key:", key, "start:", start, "end:", end)
 
 	// Konversi [][]byte ke []string untuk dikembalikan
 	results := make([]string, 0, end-start+1)
@@ -202,6 +219,65 @@ func (s *Store) RPop(key string, count int) []string {
 		s.data[key] = newData
 	}
 	return poppedValues
+}
+
+// HASH
+func (s *Store) HSet(key, field, value string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	hash, exists := s.data[key]
+	if !exists {
+		hash = Data{
+			Value: make(map[string]string),
+			TTL:   0,
+		}
+	}
+	hash.Value.(map[string]string)[field] = value
+	s.data[key] = hash
+	return 1
+}
+
+func (s *Store) HGet(key, field string) (string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	hash, exists := s.data[key]
+	if !exists {
+		return "", false
+	}
+	value, ok := hash.Value.(map[string]string)[field]
+	if !ok {
+		return "", false
+	}
+	return value, true
+}
+
+func (s *Store) HGetAll(key string) (map[string]string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	hash, exists := s.data[key]
+	if !exists {
+		return nil, false
+	}
+	return hash.Value.(map[string]string), true
+}
+
+func (s *Store) HDel(key, field string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	hash, exists := s.data[key]
+	if !exists {
+		return 0
+	}
+	if _, ok := hash.Value.(map[string]string)[field]; !ok {
+		return 0
+	}
+	delete(hash.Value.(map[string]string), field)
+	if len(hash.Value.(map[string]string)) == 0 {
+		delete(s.data, key) // remove the key if no fields left
+	} else {
+		s.data[key] = hash
+	}
+	return 1
 }
 
 // Clear the store of all expired keys

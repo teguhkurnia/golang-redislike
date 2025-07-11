@@ -20,12 +20,25 @@ func init() {
 	commandTable["SET"] = commands.SetSpec
 	commandTable["DEL"] = commands.DelSpec
 
+	// TIME commands
+	commandTable["EXPIRE"] = commands.ExpireSpec
+	commandTable["TTL"] = commands.TTLSpec
+
+	// Key existence commands
+	commandTable["EXISTS"] = commands.ExistsSpec
+
 	// List commands
 	commandTable["LPUSH"] = commands.LPushSpec
 	commandTable["RPUSH"] = commands.RPushSpec
 	commandTable["LRANGE"] = commands.LRangeSpec
 	commandTable["LPOP"] = commands.LPopSpec
 	commandTable["RPOP"] = commands.RPopSpec
+
+	// HASH commands
+	commandTable["HSET"] = commands.HSetSpec
+	commandTable["HGET"] = commands.HGetSpec
+	commandTable["HGETALL"] = commands.HGetAllSpec
+	commandTable["HDEL"] = commands.HDelSpec
 }
 
 func HandleCommand(cmd *commands.Command, store *store.Store) []byte {

@@ -52,12 +52,7 @@ func (s *Server) acceptLoop() {
 	for {
 		conn, err := s.ln.Accept()
 		if err != nil {
-			if ne, ok := err.(net.Error); ok && ne.Temporary() {
-				continue // Accept error is temporary, retry
-			}
-
-			s.quitChan <- struct{}{}
-			return // Non-temporary error, exit accept loop
+			continue
 		}
 		s.clients[conn.RemoteAddr().String()] = conn
 		go s.readLoop(conn)

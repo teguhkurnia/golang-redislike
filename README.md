@@ -110,3 +110,58 @@ func startCleanupRoutine(s *store.Store) {
 s := store.NewStore()
 startCleanupRoutine(s)
 ```
+
+## Upcoming Features
+
+### Data Types
+- **Hash Data Type**: Support for `HSET`, `HGET`, `HDEL`, `HKEYS`, `HVALS`, `HGETALL`
+- **Set Data Type**: Support for `SADD`, `SREM`, `SMEMBERS`, `SISMEMBER`, `SCARD`
+- **Sorted Set Data Type**: Support for `ZADD`, `ZREM`, `ZRANGE`, `ZRANK`, `ZSCORE`
+
+### Time & Connection Management
+- **TTL Commands**: `TTL`, `EXPIRE`, `EXPIREAT`, `PERSIST` for managing key expiration
+- **Connection Commands**: `PING`, `ECHO`, `TIME`, `CLIENT` for connection management
+
+### Advanced Features
+- **Transactions**: Support for `MULTI`, `EXEC`, `DISCARD`, `WATCH`
+- **Pub/Sub**: Support for `PUBLISH`, `SUBSCRIBE`, `UNSUBSCRIBE`
+- **Lua Scripting**: Support for `EVAL`, `EVALSHA` for custom operations
+- **Persistence**: Optional disk persistence with configurable intervals
+- **Memory Management**: Configurable memory limits and eviction policies
+- **Replication**: Master-slave replication support
+
+### Performance & Monitoring
+- **Metrics Collection**: Built-in metrics for operations, memory usage, and performance
+- **Connection Pooling**: Improved connection management for high-concurrency scenarios
+- **Benchmarking Tools**: Performance testing utilities
+
+## Roadmap
+
+### Phase 1 (Current)
+- ✅ Basic key-value operations (`SET`, `GET`, `DEL`, `EXISTS`)
+- ✅ List operations (`LPUSH`, `RPUSH`, `LRANGE`, `LPOP`, `RPOP`)
+- ✅ TTL support with expiration handling
+- ✅ Thread-safe operations
+
+### Phase 2 (Near Term)
+- 🔄 Hash data type implementation
+- 🔄 Time and connection management commands
+- 📋 Enhanced TTL commands (`TTL`, `EXPIRE`, `EXPIREAT`, `PERSIST`)
+- 📋 Basic metrics and monitoring
+
+### Phase 3 (Medium Term)
+- 📋 Set and Sorted Set data types
+- 📋 Transaction support (`MULTI`, `EXEC`, `DISCARD`)
+- 📋 Pub/Sub messaging system
+- 📋 Memory management and eviction policies
+
+### Phase 4 (Long Term)
+- 📋 Lua scripting support
+- 📋 Persistence layer with configurable backends
+- 📋 Master-slave replication
+- 📋 Advanced monitoring and performance tools
+
+**Legend:**
+- ✅ Complete
+- 🔄 In Progress
+- 📋 Planned

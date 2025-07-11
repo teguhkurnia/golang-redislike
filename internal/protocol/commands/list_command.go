@@ -185,3 +185,29 @@ var RPopSpec = &CommandSpec{
 		"summary": "Removes and returns the last element of a list.",
 	},
 }
+
+func handleLLen(cmd *Command, store *store.Store) []byte {
+	if len(cmd.Args) != 1 {
+		return fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", cmd.Name)
+	}
+
+	key := string(cmd.Args[0])
+	length, ok := store.LLen(key)
+	if !ok {
+		return fmt.Appendf(nil, "-ERR WRONGTYPE Operation against a key holding the wrong kind of value\r\n")
+	}
+
+	return fmt.Appendf(nil, ":%d\r\n", length)
+}
+
+var LLenSpec = &CommandSpec{
+	Handler:  handleLLen,
+	Arity:    2, // Exactly
+	Flags:    []string{"readonly"},
+	FirstKey: 1,
+	LastKey:  1,
+	KeyStep:  1,
+	Documentation: map[string]any{
+		"summary": "Gets the length of a list.",
+	},
+}

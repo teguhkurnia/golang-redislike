@@ -1,0 +1,28 @@
+# .air.toml
+# Configuration for live-reloading with air.
+#
+# To use: go install github.com/cosmtrek/air@latest
+# Then run: air
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  # Command to build your application.
+  cmd = "go build -o ./tmp/main ./cmd/server"
+  # Binary to run.
+  bin = "./tmp/main"
+  # Watch these file extensions.
+  include_ext = ["go", "tpl", "tmpl", "html"]
+  # Ignore these directories.
+  exclude_dir = ["vendor", "tmp"]
+  # Log for the build process.
+  log = "air-build.log"
+
+[log]
+  # Show time in log.
+  time = true
+
+[misc]
+  # Delete log file on exit.
+  clean_on_exit = true

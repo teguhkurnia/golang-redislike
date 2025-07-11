@@ -1,6 +1,7 @@
 package store
 
 import (
+	"sort"
 	"sync"
 	"time"
 )
@@ -24,6 +25,7 @@ func NewStore() *Store {
 func (s *Store) Set(key, value string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
 	s.data[key] = Data{
 		Value: value,
 		TTL:   0,
@@ -68,7 +70,49 @@ func (s *Store) Exists(key string) bool {
 	return exists
 }
 
-// TIME
+func (s *Store) Incr(key string) (int, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.data[key]; !exists {
+		s.data[key] = Data{
+			Value: 0,
+			TTL:   0,
+		}
+	}
+
+	// Increment the value
+	data := s.data[key]
+	value, ok := data.Value.(int)
+	if !ok {
+		return 0, false // Value is not an integer
+	}
+	data.Value = value + 1
+	s.data[key] = data
+
+	return data.Value.(int), true
+}
+
+func (s *Store) Decr(key string) (int, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.data[key]; !exists {
+		s.data[key] = Data{
+			Value: 0,
+			TTL:   0,
+		}
+	}
+
+	data := s.data[key]
+	value, ok := data.Value.(int)
+	if !ok {
+		return 0, false // Value is not an integer
+	}
+	data.Value = value - 1
+	s.data[key] = data
+
+	return data.Value.(int), true
+}
+
 func (s *Store) Expire(key string, seconds int) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -221,6 +265,21 @@ func (s *Store) RPop(key string, count int) []string {
 	return poppedValues
 }
 
+func (s *Store) LLen(key string) (int, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if _, exists := s.data[key]; !exists {
+		return 0, true
+	}
+
+	values, ok := s.data[key].Value.([]string)
+	if !ok {
+		return 0, false
+	}
+	return len(values), true
+}
+
 // HASH
 func (s *Store) HSet(key, field, value string) int {
 	s.mu.Lock()
@@ -278,6 +337,179 @@ func (s *Store) HDel(key, field string) int {
 		s.data[key] = hash
 	}
 	return 1
+}
+
+// SET
+func (s *Store) SAdd(key string, members []string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.data[key]; !exists {
+		s.data[key] = Data{
+			Value: make(map[string]struct{}),
+			TTL:   0,
+		}
+	}
+	set := s.data[key].Value.(map[string]struct{})
+	count := 0
+	for _, member := range members {
+		if _, ok := set[member]; !ok {
+			set[member] = struct{}{}
+			count++
+		}
+	}
+	s.data[key] = Data{
+		Value: set,
+		TTL:   0,
+	}
+	return count
+}
+
+func (s *Store) SRem(key string, members []string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	set, exists := s.data[key]
+	if !exists {
+		return 0
+	}
+
+	count := 0
+	for _, member := range members {
+		if _, ok := set.Value.(map[string]struct{})[member]; ok {
+			delete(set.Value.(map[string]struct{}), member)
+			count++
+		}
+	}
+
+	if len(set.Value.(map[string]struct{})) == 0 {
+		delete(s.data, key) // remove the key if no members left
+	} else {
+		s.data[key] = set
+	}
+
+	return count
+}
+
+func (s *Store) SMembers(key string) []string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	set, exists := s.data[key]
+	if !exists {
+		return []string{}
+	}
+
+	members := make([]string, 0, len(set.Value.(map[string]struct{})))
+	for member := range set.Value.(map[string]struct{}) {
+		members = append(members, member)
+	}
+
+	return members
+}
+
+func (s *Store) SIsMember(key, member string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	set, exists := s.data[key]
+	if !exists {
+		return false
+	}
+
+	_, ok := set.Value.(map[string]struct{})[member]
+	return ok
+}
+
+type SortedSet struct {
+	Score  float64
+	Member string
+}
+
+// Sorted Set
+func (s *Store) ZAdd(key string, members []SortedSet) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	data, exists := s.data[key]
+	if !exists {
+		data = Data{
+			Value: make([]SortedSet, 0),
+			TTL:   0,
+		}
+	}
+
+	appended := 0
+	zset := data.Value.([]SortedSet)
+	for _, member := range members {
+		found := false
+		for _, existing := range zset {
+			if existing.Member == member.Member && existing.Score == member.Score {
+				found = true // Member already exists with the same score
+				break
+			}
+		}
+		if !found {
+			zset = append(zset, member) // Add new member
+			appended++
+		}
+	}
+	// Sort the zset by score
+	sort.Slice(zset, func(i, j int) bool {
+		return zset[i].Score < zset[j].Score
+	})
+
+	data.Value = zset
+	s.data[key] = data
+
+	return appended
+}
+
+func (s *Store) ZRange(key string, start, end int) []SortedSet {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if _, exists := s.data[key]; !exists {
+		return nil
+	}
+
+	zset := s.data[key].Value.([]SortedSet)
+	if start < 0 {
+		start = len(zset) + start
+	}
+	if end < 0 {
+		end = len(zset) + end
+	}
+	if start < 0 {
+		start = 0
+	}
+	if end >= len(zset) {
+		end = len(zset) - 1
+	}
+	return zset[start : end+1]
+}
+
+func (s *Store) ZRem(key string, members []string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if _, exists := s.data[key]; !exists {
+		return 0
+	}
+
+	zset := s.data[key].Value.([]SortedSet)
+	count := 0
+	for _, member := range members {
+		for i := 0; i < len(zset); i++ {
+			if zset[i].Member == member {
+				zset = append(zset[:i], zset[i+1:]...)
+				count++
+				break
+			}
+		}
+	}
+	if len(zset) == 0 {
+		delete(s.data, key)
+	} else {
+		s.data[key] = Data{
+			Value: zset,
+			TTL:   0,
+		}
+	}
+	return count
 }
 
 // Clear the store of all expired keys

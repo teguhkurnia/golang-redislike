@@ -84,3 +84,50 @@ var DelSpec = &CommandSpec{
 		"summary": "Deletes a key.",
 	},
 }
+
+func handleIncr(cmd *Command, store *store.Store) []byte {
+	if len(cmd.Args) != 1 {
+		return fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", cmd.Name)
+	}
+	value, ok := store.Incr(string(cmd.Args[0]))
+	if !ok {
+		return fmt.Appendf(nil, "-ERR value is not an integer\r\n")
+	}
+	return fmt.Appendf(nil, ":%d\r\n", value)
+}
+
+var IncrSpec = &CommandSpec{
+	Handler:  handleIncr,
+	Arity:    2,
+	Flags:    []string{"write"},
+	FirstKey: 1,
+	LastKey:  1,
+	KeyStep:  1,
+	Documentation: map[string]interface{}{
+		"summary": "Increments the integer value of a key by one.",
+	},
+}
+
+func handleDecr(cmd *Command, store *store.Store) []byte {
+	if len(cmd.Args) != 1 {
+		return fmt.Appendf(nil, "-ERR wrong number of arguments for '%s' command\r\n", cmd.Name)
+	}
+	value, ok := store.Decr(string(cmd.Args[0]))
+	if !ok {
+		return fmt.Appendf(nil, "-ERR value is not an integer\r\n")
+	}
+
+	return fmt.Appendf(nil, ":%d\r\n", value)
+}
+
+var DecrSpec = &CommandSpec{
+	Handler:  handleDecr,
+	Arity:    2,
+	Flags:    []string{"write"},
+	FirstKey: 1,
+	LastKey:  1,
+	KeyStep:  1,
+	Documentation: map[string]interface{}{
+		"summary": "Decrements the integer value of a key by one.",
+	},
+}

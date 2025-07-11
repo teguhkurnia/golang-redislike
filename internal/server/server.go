@@ -2,6 +2,8 @@ package server
 
 import (
 	"bufio"
+	"fmt"
+	"io"
 	"net"
 
 	"github.com/teguhkurnia/redis-like/internal/protocol"
@@ -42,6 +44,7 @@ func (s *Server) Start() {
 	s.ln = ln
 	go s.acceptLoop()
 
+	fmt.Printf("🚀 Server started on %s\n", s.ListenAddr)
 	<-s.quitChan
 	s.ln.Close()
 	close(s.msgChan)
@@ -54,6 +57,7 @@ func (s *Server) acceptLoop() {
 		if err != nil {
 			continue
 		}
+		fmt.Printf("💬 New connection from %s\n", conn.RemoteAddr().String())
 		s.clients[conn.RemoteAddr().String()] = conn
 		go s.readLoop(conn)
 	}
@@ -68,6 +72,13 @@ func (s *Server) readLoop(conn net.Conn) {
 		}
 		cmd, err := value.ToCommand()
 		if err != nil {
+			if err == io.EOF {
+				fmt.Printf("❌ Connection closed by %s\n", conn.RemoteAddr().String())
+				conn.Close()
+				delete(s.clients, conn.RemoteAddr().String())
+				return
+			}
+
 			continue
 		}
 

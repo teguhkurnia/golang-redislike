@@ -35,7 +35,7 @@
 
 ## Testing
 
-- [ ] Unit tests for all commands and data structures.
+- [x] Unit tests for all commands and data structures.
 - [ ] Integration tests to simulate client-server interaction.
 - [ ] Benchmark tests to measure performance.
 

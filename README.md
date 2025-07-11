@@ -66,7 +66,7 @@ The following features are planned for future releases:
 - **Replication**:
   - [ ] Master-slave replication
 - **Testing**:
-  - [ ] Comprehensive unit tests for all commands
+  - [x] Comprehensive unit tests for all commands
   - [ ] Integration tests
   - [ ] Performance benchmarks
 - **Additional Features**:

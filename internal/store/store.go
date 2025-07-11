@@ -1,7 +1,9 @@
 package store
 
 import (
+	"fmt"
 	"sort"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -73,44 +75,43 @@ func (s *Store) Exists(key string) bool {
 func (s *Store) Incr(key string) (int, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, exists := s.data[key]; !exists {
-		s.data[key] = Data{
-			Value: 0,
+	value, exists := s.data[key]
+	if !exists {
+		value = Data{
+			Value: "0",
 			TTL:   0,
 		}
 	}
-
 	// Increment the value
-	data := s.data[key]
-	value, ok := data.Value.(int)
-	if !ok {
+	intValue, err := strconv.Atoi(fmt.Sprintf("%v", value.Value))
+	if err != nil {
 		return 0, false // Value is not an integer
 	}
-	data.Value = value + 1
-	s.data[key] = data
+	value.Value = intValue + 1
+	s.data[key] = value
 
-	return data.Value.(int), true
+	return intValue + 1, true
 }
 
 func (s *Store) Decr(key string) (int, bool) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if _, exists := s.data[key]; !exists {
-		s.data[key] = Data{
-			Value: 0,
+	value, exists := s.data[key]
+	if !exists {
+		value = Data{
+			Value: "0",
 			TTL:   0,
 		}
 	}
 
-	data := s.data[key]
-	value, ok := data.Value.(int)
-	if !ok {
+	intValue, err := strconv.Atoi(fmt.Sprintf("%v", value.Value))
+	if err != nil {
 		return 0, false // Value is not an integer
 	}
-	data.Value = value - 1
-	s.data[key] = data
+	value.Value = intValue - 1
+	s.data[key] = value
 
-	return data.Value.(int), true
+	return intValue - 1, true
 }
 
 func (s *Store) Expire(key string, seconds int) int {

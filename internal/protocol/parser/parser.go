@@ -31,6 +31,17 @@ func ParseNextValue(reader *bufio.Reader) (RESPValue, error) {
 	valueContent := line[1:]
 
 	switch valueType {
+	case '+': // Simple String
+		str := string(valueContent)
+		// Handle quoted strings
+		if len(str) >= 2 && str[0] == '"' && str[len(str)-1] == '"' {
+			// Remove quotes and handle escape sequences
+			unquoted := str[1 : len(str)-1]
+			unquoted = strings.ReplaceAll(unquoted, `\"`, `"`)
+			unquoted = strings.ReplaceAll(unquoted, `\\`, `\`)
+			return RESPValue{Type: '+', Str: unquoted}, nil
+		}
+		return RESPValue{Type: '+', Str: str}, nil
 	case '$': // Bulk String
 		length, err := strconv.Atoi(string(valueContent))
 		if err != nil {
@@ -70,11 +81,34 @@ func (v RESPValue) ToCommand() (*commands.Command, error) {
 	if len(v.Array) == 0 {
 		return nil, fmt.Errorf("invalid command: empty array")
 	}
-	cmd := &commands.Command{
-		Name: strings.ToUpper(string(v.Array[0].Bulk)),
+	
+	// Get command name from first element
+	var cmdName string
+	switch v.Array[0].Type {
+	case '$':
+		cmdName = string(v.Array[0].Bulk)
+	case '+':
+		cmdName = v.Array[0].Str
+	default:
+		return nil, fmt.Errorf("invalid command name type: %c", v.Array[0].Type)
 	}
+	
+	cmd := &commands.Command{
+		Name: strings.ToUpper(cmdName),
+	}
+	
+	// Process arguments
 	for i := 1; i < len(v.Array); i++ {
-		cmd.Args = append(cmd.Args, v.Array[i].Bulk)
+		var arg []byte
+		switch v.Array[i].Type {
+		case '$':
+			arg = v.Array[i].Bulk
+		case '+':
+			arg = []byte(v.Array[i].Str)
+		default:
+			return nil, fmt.Errorf("invalid argument type: %c", v.Array[i].Type)
+		}
+		cmd.Args = append(cmd.Args, arg)
 	}
 	return cmd, nil
 }
